@@ -23,12 +23,14 @@ import {
 } from "@/lib/specialSupply";
 import { analyzeRegions, type RegionAdvice } from "@/lib/regional";
 import { useSound } from "@/lib/useSound";
+import { useBackgroundMusic } from "@/lib/useBackgroundMusic";
 
 type TabKey = "score" | "special" | "region";
 
 export default function Home() {
   const [tab, setTab] = useState<TabKey>("score");
   const sound = useSound();
+  const bgm = useBackgroundMusic();
 
   const [unhousedYears, setUnhousedYears] = useState(5);
   const [dependents, setDependents] = useState(2);
@@ -79,10 +81,19 @@ export default function Home() {
               번에 진단해드립니다. 결과를 보고 맞춤 청약정보를 받아볼 수 있어요.
             </p>
           </div>
-          <SoundToggle
-            enabled={sound.enabled}
-            onClick={() => sound.toggle()}
-          />
+          <div className="flex shrink-0 items-center gap-2">
+            <BgmToggle
+              enabled={bgm.enabled}
+              onClick={() => {
+                sound.play("click");
+                bgm.toggle();
+              }}
+            />
+            <SoundToggle
+              enabled={sound.enabled}
+              onClick={() => sound.toggle()}
+            />
+          </div>
         </div>
       </header>
 
@@ -158,6 +169,58 @@ export default function Home() {
         공식 공고와 청약홈을 반드시 확인하세요.
       </footer>
     </main>
+  );
+}
+
+function BgmToggle({
+  enabled,
+  onClick,
+}: {
+  enabled: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="btn-ghost shrink-0"
+      aria-label={enabled ? "배경음악 끄기" : "배경음악 켜기"}
+      title={enabled ? "배경음악 끄기 (클래식)" : "배경음악 켜기 (클래식)"}
+    >
+      {enabled ? (
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="animate-pulse-soft"
+        >
+          <path d="M9 18V5l12-2v13" />
+          <circle cx="6" cy="18" r="3" />
+          <circle cx="18" cy="16" r="3" />
+        </svg>
+      ) : (
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M9 18V5l12-2v13" />
+          <circle cx="6" cy="18" r="3" />
+          <circle cx="18" cy="16" r="3" />
+          <line x1="3" y1="3" x2="21" y2="21" />
+        </svg>
+      )}
+      <span>{enabled ? "BGM ON" : "BGM OFF"}</span>
+    </button>
   );
 }
 
