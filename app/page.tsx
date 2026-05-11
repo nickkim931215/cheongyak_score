@@ -65,23 +65,23 @@ export default function Home() {
   );
 
   return (
-    <main className="relative mx-auto max-w-5xl px-4 py-12 md:py-20">
-      <header className="mb-12 animate-fade-up">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium tracking-wide text-brand-200 backdrop-blur">
+    <main className="relative mx-auto max-w-5xl px-4 py-8 md:py-20">
+      <header className="mb-8 animate-fade-up md:mb-12">
+        <div className="flex flex-col-reverse gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="min-w-0">
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-medium tracking-wide text-brand-200 backdrop-blur md:text-xs">
               <span className="h-1.5 w-1.5 animate-pulse-soft rounded-full bg-gradient-to-r from-brand-400 to-accent-400 shadow-[0_0_10px_rgba(99,102,241,0.7)]" />
               AI 청약 의사결정 플랫폼
             </span>
-            <h1 className="mt-4 text-4xl font-bold tracking-tight md:text-5xl">
+            <h1 className="mt-3 text-[2rem] font-bold leading-[1.15] tracking-tight md:mt-4 md:text-5xl">
               <span className="text-gradient">청약전략진단</span>
             </h1>
-            <p className="mt-4 max-w-2xl text-[0.95rem] leading-relaxed text-slate-300/80">
+            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-300/80 md:mt-4 md:text-[0.95rem]">
               내 조건을 입력하면 청약 가점, 특별공급 자격, 지역별 경쟁력을 한
               번에 진단해드립니다. 결과를 보고 맞춤 청약정보를 받아볼 수 있어요.
             </p>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2 self-end md:self-auto">
             <BgmToggle
               enabled={bgm.enabled}
               onClick={() => {
@@ -97,7 +97,7 @@ export default function Home() {
         </div>
       </header>
 
-      <nav className="mb-6 flex flex-wrap gap-6 border-b border-white/10">
+      <nav className="mb-6 flex flex-wrap gap-x-4 gap-y-1 border-b border-white/10 md:gap-x-6">
         <TabBtn
           active={tab === "score"}
           onClick={() => {
@@ -132,7 +132,7 @@ export default function Home() {
 
       <section
         key={tab}
-        className="glass animate-fade-up rounded-2xl p-6 shadow-card md:p-8"
+        className="glass animate-fade-up rounded-2xl p-5 shadow-card md:p-8"
       >
         {tab === "score" && (
           <ScoreSection
@@ -164,9 +164,11 @@ export default function Home() {
         playSound={sound.play}
       />
 
-      <footer className="mt-14 text-center text-xs text-slate-500">
-        본 진단은 단순화된 모의 룰셋과 데모 데이터에 기반합니다. 실제 청약 시
-        공식 공고와 청약홈을 반드시 확인하세요.
+      <footer className="mt-10 text-center text-[11px] leading-relaxed text-slate-500 md:mt-14 md:text-xs">
+        본 진단은 단순화된 모의 룰셋과 데모 데이터에 기반합니다.
+        <br className="sm:hidden" />
+        <span className="hidden sm:inline"> </span>
+        실제 청약 시 공식 공고와 청약홈을 반드시 확인하세요.
       </footer>
     </main>
   );
@@ -219,7 +221,7 @@ function BgmToggle({
           <line x1="3" y1="3" x2="21" y2="21" />
         </svg>
       )}
-      <span>{enabled ? "BGM ON" : "BGM OFF"}</span>
+      <span className="hidden sm:inline">{enabled ? "BGM ON" : "BGM OFF"}</span>
     </button>
   );
 }
@@ -251,7 +253,7 @@ function SoundToggle({
           <line x1="17" y1="9" x2="23" y2="15" />
         </svg>
       )}
-      <span>{enabled ? "효과음 ON" : "효과음 OFF"}</span>
+      <span className="hidden sm:inline">{enabled ? "효과음 ON" : "효과음 OFF"}</span>
     </button>
   );
 }
@@ -346,7 +348,7 @@ function ScoreSection({
   onSubscriptionChange: (v: number) => void;
 }) {
   return (
-    <div className="grid gap-8 md:grid-cols-2">
+    <div className="grid gap-6 md:grid-cols-2 md:gap-8">
       <div className="space-y-6">
         <h2 className="text-base font-semibold text-white/90">조건 입력</h2>
 
@@ -386,10 +388,10 @@ function ScoreSection({
         <h2 className="text-base font-semibold text-white/90">진단 결과</h2>
         <div className="mt-4 rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-white/[0.01] p-6">
           <div className="flex items-baseline gap-3">
-            <span className="shimmer-text text-6xl font-bold tabular-nums">
+            <span className="shimmer-text text-5xl font-bold tabular-nums md:text-6xl">
               {score.totalScore}
             </span>
-            <span className="text-slate-400">/ 84점</span>
+            <span className="text-sm text-slate-400 md:text-base">/ 84점</span>
           </div>
           <p className={`mt-2 text-sm font-semibold ${mapTierColor(tier.color)}`}>
             {tier.label}
@@ -517,7 +519,7 @@ function SpecialSupplySection({
   }
 
   return (
-    <div className="grid gap-8 md:grid-cols-2">
+    <div className="grid gap-6 md:grid-cols-2 md:gap-8">
       <div className="space-y-4">
         <h2 className="text-base font-semibold text-white/90">조건 입력</h2>
 
@@ -716,8 +718,8 @@ function RegionalSection({
         </span>
       </div>
 
-      <div className="mt-4 overflow-hidden rounded-xl border border-white/10">
-        <table className="tbl">
+      <div className="mt-4 -mx-5 overflow-x-auto md:mx-0 md:rounded-xl md:border md:border-white/10">
+        <table className="tbl min-w-[600px]">
           <thead>
             <tr>
               <th>지역</th>
@@ -852,7 +854,7 @@ function LeadForm({
   }
 
   return (
-    <section className="glass mt-12 rounded-2xl p-6 shadow-card md:p-8">
+    <section className="glass mt-10 rounded-2xl p-5 shadow-card md:mt-12 md:p-8">
       <h2 className="text-lg font-semibold text-white">
         맞춤 청약정보 받아보기
       </h2>
@@ -901,7 +903,7 @@ function LeadForm({
           </Checkbox>
         </div>
 
-        <div className="md:col-span-2 flex items-center gap-3">
+        <div className="md:col-span-2 flex flex-wrap items-center gap-3">
           <RippleButton
             type="submit"
             disabled={status.kind === "loading"}
