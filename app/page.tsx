@@ -28,6 +28,12 @@ import { useBackgroundMusic } from "@/lib/useBackgroundMusic";
 type TabKey = "score" | "special" | "region";
 
 export default function Home() {
+  useEffect(() => {
+    // Send a POST request to the visit API endpoint to log the visit.
+    fetch('/api/visit', { method: 'POST' })
+      .catch(console.error); // Log any errors to the console
+  }, []); // The empty dependency array ensures this effect runs only once on mount.
+
   const [tab, setTab] = useState<TabKey>("score");
   const sound = useSound();
   const bgm = useBackgroundMusic();
@@ -163,6 +169,8 @@ export default function Home() {
         defaultIncome={ss.monthlyIncomeKRW}
         playSound={sound.play}
       />
+
+      <BannerSection playSound={sound.play} />
 
       <footer className="mt-10 text-center text-[11px] leading-relaxed text-slate-500 md:mt-14 md:text-xs">
         본 진단은 단순화된 모의 룰셋과 데모 데이터에 기반합니다.
@@ -922,5 +930,498 @@ function LeadForm({
         </div>
       </form>
     </section>
+  );
+}
+
+// ─────────────────────────────────────────────────────────
+// 부동산 YouTube 배너 (광고 슬롯 3개 + 문의 폼)
+// ─────────────────────────────────────────────────────────
+
+type BannerSlot = {
+  id: 1 | 2 | 3;
+  youtubeUrl?: string;
+  title?: string;
+  caption?: string;
+};
+
+// YouTube 링크를 채워두면 자동으로 썸네일·제목이 노출됩니다.
+// 비워두면 "광고 모집중" 플레이스홀더로 표시됩니다.
+const BANNER_SLOTS: BannerSlot[] = [
+  {
+    id: 1,
+    youtubeUrl: "https://www.youtube.com/shorts/DZh4xdk2Eew",
+    title: "부동산 추천 영상",
+    caption: "Shorts",
+  },
+  { id: 2 },
+  { id: 3 },
+];
+
+function extractYoutubeId(url: string): string | null {
+  try {
+    const u = new URL(url);
+    const host = u.hostname.replace(/^www\./, "");
+    if (host === "youtu.be") return u.pathname.slice(1) || null;
+    if (host.endsWith("youtube.com") || host.endsWith("youtube-nocookie.com")) {
+      if (u.pathname === "/watch") return u.searchParams.get("v");
+      const m = u.pathname.match(/^\/(embed|shorts|live)\/([^/?#]+)/);
+      if (m) return m[2];
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function BannerSection({
+  playSound,
+}: {
+  playSound: (
+    kind: "click" | "tab" | "toggle" | "success" | "hover"
+  ) => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <section className="mt-10 md:mt-14">
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <h2 className="text-base font-semibold text-white/90 md:text-lg">
+            추천 부동산 채널
+          </h2>
+          <p className="mt-1 text-xs text-slate-400 md:text-sm">
+            청약·분양·시세 등 실전 정보가 담긴 영상 모음입니다.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            playSound("click");
+            setOpen(true);
+          }}
+          onMouseEnter={() => playSound("hover")}
+          className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-[12px] font-medium text-slate-200 backdrop-blur transition hover:border-brand-400/50 hover:bg-white/10 hover:text-white md:text-xs"
+        >
+          광고 문의하기
+          <span className="ml-1.5 text-slate-400">→</span>
+        </button>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 md:mt-5 md:grid-cols-3 md:gap-4">
+        {BANNER_SLOTS.map((slot) => (
+          <BannerCard
+            key={slot.id}
+            slot={slot}
+            onInquire={() => {
+              playSound("click");
+              setOpen(true);
+            }}
+            playHover={() => playSound("hover")}
+          />
+        ))}
+      </div>
+
+      {open && (
+        <BannerInquiryModal
+          onClose={() => setOpen(false)}
+          playSound={playSound}
+        />
+      )}
+    </section>
+  );
+}
+
+function BannerCard({
+  slot,
+  onInquire,
+  playHover,
+}: {
+  slot: BannerSlot;
+  onInquire: () => void;
+  playHover: () => void;
+}) {
+  const ytId = slot.youtubeUrl ? extractYoutubeId(slot.youtubeUrl) : null;
+
+  if (ytId && slot.youtubeUrl) {
+    return (
+      <a
+        href={slot.youtubeUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        onMouseEnter={playHover}
+        className="group glass relative block overflow-hidden rounded-xl shadow-card transition hover:border-brand-400/40"
+      >
+        <div className="relative aspect-video overflow-hidden bg-black/40">
+          <img
+            src={`https://img.youtube.com/vi/${ytId}/hqdefault.jpg`}
+            alt={slot.title ?? "YouTube 영상"}
+            loading="lazy"
+            className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
+          />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-rose-600/90 shadow-[0_8px_30px_rgba(244,63,94,0.45)] ring-1 ring-white/30 transition group-hover:scale-110">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="white"
+                aria-hidden
+              >
+                <polygon points="6,4 20,12 6,20" />
+              </svg>
+            </span>
+          </div>
+          <span className="absolute left-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white/80 backdrop-blur">
+            AD · #{slot.id}
+          </span>
+        </div>
+        <div className="p-3 md:p-4">
+          <p className="line-clamp-2 text-sm font-medium text-white md:text-[0.95rem]">
+            {slot.title ?? "추천 영상"}
+          </p>
+          {slot.caption && (
+            <p className="mt-1 text-xs text-slate-400">{slot.caption}</p>
+          )}
+        </div>
+      </a>
+    );
+  }
+
+  // 빈 슬롯 — 광고 모집중
+  return (
+    <button
+      type="button"
+      onClick={onInquire}
+      onMouseEnter={playHover}
+      className="glass group relative flex aspect-video flex-col items-center justify-center overflow-hidden rounded-xl border-dashed text-center transition hover:border-brand-400/50 hover:bg-white/[0.04] sm:aspect-auto sm:min-h-[180px]"
+    >
+      <span className="absolute left-2 top-2 rounded-full bg-white/5 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+        AD · #{slot.id}
+      </span>
+      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 ring-1 ring-white/10 transition group-hover:bg-brand-500/15 group-hover:ring-brand-400/30">
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="text-slate-300 group-hover:text-brand-200"
+        >
+          <polygon points="23 7 16 12 23 17 23 7" />
+          <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+        </svg>
+      </span>
+      <p className="mt-2.5 text-sm font-semibold text-white/90">
+        광고 자리 모집중
+      </p>
+      <p className="mt-0.5 text-xs text-slate-400">
+        부동산 채널 영상 노출 · 월 임대
+      </p>
+      <span className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-brand-200">
+        문의하기 →
+      </span>
+    </button>
+  );
+}
+
+const PERIOD_OPTIONS = [
+  { key: "30" as const, label: "30일", price: "10만원" },
+  { key: "60" as const, label: "60일", price: "18만원" },
+  { key: "90" as const, label: "90일", price: "25만원" },
+];
+
+function BannerInquiryModal({
+  onClose,
+  playSound,
+}: {
+  onClose: () => void;
+  playSound: (
+    kind: "click" | "tab" | "toggle" | "success" | "hover"
+  ) => void;
+}) {
+  const [youtubeUrl, setYoutubeUrl] = useState("");
+  const [period, setPeriod] = useState<"30" | "60" | "90">("30");
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const [agree, setAgree] = useState(false);
+  const [status, setStatus] = useState<
+    | { kind: "idle" }
+    | { kind: "loading" }
+    | { kind: "ok" }
+    | { kind: "error"; message: string }
+  >({ kind: "idle" });
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [onClose]);
+
+  useEffect(() => {
+    if (status.kind === "ok") playSound("success");
+  }, [status.kind, playSound]);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!youtubeUrl.trim()) {
+      setStatus({ kind: "error", message: "YouTube 영상 링크를 입력해주세요." });
+      return;
+    }
+    if (!name.trim() || !phone.trim()) {
+      setStatus({ kind: "error", message: "이름과 연락처를 입력해주세요." });
+      return;
+    }
+    if (!agree) {
+      setStatus({
+        kind: "error",
+        message: "개인정보 수집 동의가 필요합니다.",
+      });
+      return;
+    }
+    setStatus({ kind: "loading" });
+    try {
+      const res = await fetch("/api/banner-inquiry", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          youtubeUrl: youtubeUrl.trim(),
+          period,
+          name: name.trim(),
+          phone: phone.trim(),
+          email: email.trim() || undefined,
+          message: message.trim() || undefined,
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error ?? "전송 실패");
+      }
+      setStatus({ kind: "ok" });
+    } catch (err) {
+      setStatus({
+        kind: "error",
+        message: err instanceof Error ? err.message : "전송 실패",
+      });
+    }
+  }
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="배너 광고 문의"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm md:items-center md:p-6"
+      onClick={onClose}
+    >
+      <div
+        className="glass-strong relative w-full max-h-[92vh] overflow-y-auto rounded-t-2xl shadow-2xl md:max-w-lg md:rounded-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="닫기"
+          className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full text-slate-300 transition hover:bg-white/10 hover:text-white"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+
+        <div className="p-5 md:p-7">
+          <h3 className="text-base font-semibold text-white md:text-lg">
+            배너 광고 문의
+          </h3>
+          <p className="mt-1 text-xs text-slate-400 md:text-sm">
+            부동산 YouTube 채널을 배너에 노출시켜 드립니다. 접수해주시면
+            검토 후 빠르게 회신드릴게요.
+          </p>
+
+          {status.kind === "ok" ? (
+            <div className="mt-6 rounded-xl border border-emerald-400/30 bg-emerald-500/10 p-5 text-center">
+              <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/20 ring-1 ring-emerald-400/40">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="text-emerald-300"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </div>
+              <p className="mt-3 text-sm font-semibold text-white">
+                문의가 접수되었습니다
+              </p>
+              <p className="mt-1 text-xs text-emerald-200/80">
+                담당자가 입력하신 연락처로 회신드릴게요.
+              </p>
+              <button
+                type="button"
+                onClick={onClose}
+                className="mt-5 rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm text-slate-200 transition hover:bg-white/10"
+              >
+                닫기
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={submit} className="mt-5 grid gap-4">
+              <Field label="YouTube 영상 링크">
+                <input
+                  className="input"
+                  type="url"
+                  value={youtubeUrl}
+                  onChange={(e) => setYoutubeUrl(e.target.value)}
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  inputMode="url"
+                  autoComplete="off"
+                />
+              </Field>
+
+              <div>
+                <span className="text-xs font-medium uppercase tracking-wider text-slate-400">
+                  광고 기간 / 금액
+                </span>
+                <div className="mt-1.5 grid grid-cols-3 gap-2">
+                  {PERIOD_OPTIONS.map((opt) => {
+                    const active = period === opt.key;
+                    return (
+                      <button
+                        key={opt.key}
+                        type="button"
+                        onClick={() => {
+                          playSound("toggle");
+                          setPeriod(opt.key);
+                        }}
+                        className={`rounded-lg border px-2 py-2.5 text-center transition ${
+                          active
+                            ? "border-brand-400/60 bg-brand-500/15 text-white shadow-[0_0_0_3px_rgba(99,102,241,0.18)]"
+                            : "border-white/10 bg-white/[0.02] text-slate-300 hover:border-white/20 hover:bg-white/[0.05]"
+                        }`}
+                      >
+                        <div className="text-sm font-semibold">
+                          {opt.label}
+                        </div>
+                        <div
+                          className={`mt-0.5 text-[11px] ${
+                            active ? "text-brand-100" : "text-slate-400"
+                          }`}
+                        >
+                          {opt.price}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="이름">
+                  <input
+                    className="input"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="홍길동"
+                    autoComplete="name"
+                  />
+                </Field>
+                <Field label="연락처">
+                  <input
+                    className="input"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="010-0000-0000"
+                    inputMode="tel"
+                    autoComplete="tel"
+                  />
+                </Field>
+              </div>
+
+              <Field label="이메일 (선택)">
+                <input
+                  className="input"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  inputMode="email"
+                  autoComplete="email"
+                />
+              </Field>
+
+              <Field label="메모 (선택)">
+                <textarea
+                  className="input min-h-[80px] resize-y"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="요청사항이나 채널 소개를 자유롭게 적어주세요."
+                  rows={3}
+                />
+              </Field>
+
+              <Checkbox checked={agree} onChange={setAgree}>
+                개인정보 수집·이용에 동의합니다 (이름, 연락처, 이메일)
+              </Checkbox>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <RippleButton
+                  type="submit"
+                  disabled={status.kind === "loading"}
+                  playSound={() => playSound("click")}
+                  className="btn-primary"
+                >
+                  {status.kind === "loading" ? "전송 중..." : "문의 보내기"}
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                    <polyline points="12 5 19 12 12 19" />
+                  </svg>
+                </RippleButton>
+                {status.kind === "error" && (
+                  <span className="text-sm text-rose-300">
+                    {status.message}
+                  </span>
+                )}
+              </div>
+            </form>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
